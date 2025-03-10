@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<hmtl>
+    <head>
+        <author>Kacper Baum-Azbum s61269</author>
+        <title>Lab2Ex1</title>
+        <script>
+            "use strict";
+
+            var canvas;
+            var graphics;
+
+            // wariant 7
+            function draw()
+            {
+                // Diamond shape
+                graphics.beginPath();
+                graphics.moveTo(60, 10);
+                graphics.lineTo(260, 10);
+                graphics.lineTo(310, 60);
+                graphics.lineTo(160, 310);
+                graphics.lineTo(10, 60);
+                graphics.lineTo(60, 10);
+                graphics.stroke();
+                graphics.fill();
+                graphics.closePath();
+
+                graphics.beginPath();
+                graphics.moveTo(310, 60);
+                graphics.lineTo(10, 60);
+                graphics.stroke();
+                graphics.closePath();
+
+                // eyes
+                graphics.fillStyle = "white";
+
+                graphics.beginPath();
+                graphics.fillCircle(100,35,10);
+                graphics.fill();
+                graphics.closePath();
+
+                graphics.beginPath();
+                graphics.fillCircle(210, 35, 10);
+                graphics.fill();
+                graphics.closePath();
+
+                // inside eyes
+                graphics.fillStyle = "black";
+                graphics.beginPath();
+                graphics.fillCircle(100,35,5);
+                graphics.fill();
+                graphics.closePath();
+
+                graphics.beginPath();
+                graphics.fillCircle(210, 35, 5);
+                graphics.fill();
+                graphics.closePath();
+
+                // mouth
+                graphics.strokeStyle = "black";
+                graphics.fillStyle = "black";
+                graphics.beginPath();
+                graphics.bezierCurveTo(100, 120, 160, 140, 220, 120);
+                graphics.bezierCurveTo(220, 120, 160, 200, 100, 120);
+                graphics.stroke();
+                graphics.fill();
+                graphics.closePath();
+
+                graphics.beginPath();
+                graphics.bezierCurveTo(90, 110, 110, 120, 90, 130);
+                graphics.stroke();
+                graphics.closePath();
+
+                graphics.beginPath();
+                graphics.bezierCurveTo(230, 110, 210, 120, 230, 130);
+                graphics.stroke();
+                graphics.closePath();
+
+                // teeth
+                graphics.fillStyle = "white";
+                graphics.beginPath();
+                graphics.rect(145, 127, 10, 20);
+                graphics.fill();
+                graphics.closePath();
+
+                graphics.beginPath();
+                graphics.rect(160, 127, 10, 20);
+                graphics.fill();
+                graphics.closePath();
+                
+            }
+            function config()
+            {
+                graphics.lineWidth = 2.5; // Change the current width
+                graphics.lineCap = "round"; //for endpoints it can be set to "round", "square", or "butt"
+                graphics.lineJoin = "round"; //for joins, it can be "round", "bevel", or "miter"
+                // Ustalenie koloru
+                graphics.fillStyle = "rgb(232, 37, 187)"; // light blue
+                graphics.strokeStyle = "#000000"; // a darker, greenish blue
+                // ustalenie czcionki zgodnie z CSS; domy´slna jest "10px sans-serif"
+                graphics.font = "2cm monospace"; // the size is in centimeters
+                graphics.font = "bold 18px sans-serif";
+                graphics.font = "italic 150% serif"; // size is 150% of the usual size  
+            }
+            function addGraphicsContextExtras(graphics) {
+                graphics.strokeLine = function(x1,y1,x2,y2) {
+                this.beginPath();
+                this.moveTo(x1,y1);
+                this.lineTo(x2,y2);
+                this.stroke();
+                }
+                graphics.fillCircle = function(x,y,r) {
+                this.beginPath();
+                this.arc(x,y,r,0,2*Math.PI,false);
+                this.fill();
+                }
+                graphics.strokeCircle = function(x,y,radius) {
+                this.beginPath();
+                this.arc(x,y,radius,0,2*Math.PI,false);
+                this.stroke();
+                }
+                graphics.fillPoly = function() { 
+                    if (arguments.length < 6)
+                    return;
+                    this.beginPath();
+                    this.moveTo(arguments[0],arguments[1]);
+                    for (var i = 2; i+1 < arguments.length; i = i + 2) { 
+                    this.lineTo(arguments[i],arguments[i+1]);
+                    }
+                    this.closePath();
+                    this.fill();
+                }
+                graphics.strokePoly = function() { 
+                    if (arguments.length < 4)
+                    return;
+                    this.beginPath();
+                    this.moveTo(arguments[0],arguments[1]);
+                    for (var i = 2; i+1 < arguments.length; i = i + 2) { 
+                    this.lineTo(arguments[i],arguments[i+1]);
+                    }
+                    this.closePath();
+                    this.stroke();
+                }
+                graphics.fillOval = function(x,y,horizontalRadius,verticalRadius) {
+                this.save();
+                this.translate(x,y);
+                this.scale(horizontalRadius,verticalRadius);
+                this.beginPath();
+                this.arc(0,0,1,0,2*Math.PI,false);
+                this.restore();
+                this.fill();
+                }
+                graphics.strokeOval = function(x,y,horizontalRadius,verticalRadius) {
+                this.save();
+                this.translate(x,y);
+                this.scale(horizontalRadius,verticalRadius);
+                this.beginPath();
+                this.arc(0,0,1,0,2*Math.PI,false);
+                this.restore();
+                this.stroke();
+                }
+                graphics.getRGB = function(x,y) {
+                    var color = this.getImageData(x,y,1,1);
+                    return color.data;
+                }
+            }    // end of addGraphicsContextExtras()
+            function init()
+            {
+                try {
+                    canvas = document.getElementById("canvas");
+                    graphics = canvas.getContext("2d");
+                } catch (e) {
+                    document.getElementById("canvas-wrapper").innerHTML = "<p>Canvas not supported.</p>";
+                }
+                addGraphicsContextExtras(graphics);
+                config();
+                draw();
+            }
+        </script>
+    </head>
+    <body onload="init()">
+        <h1>CPSC 424, Lab2, Excersise 1</h1>
+        <div id="canvas-wrapper">
+            <canvas id="canvas" width="800" height="600">
+
+            </canvas>
+        </div>
+    </body>
+</hmtl>
