@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html>
+<!--
+  Shows a variety of texture images on a variety of objects, with
+  a variety of texture transforms, all under the user's control.
+-->
+<head>
+<meta charset="UTF-8">
+<title>Textures and Texture Transforms</title>
+<link rel="stylesheet" href="../demo.css">
+<style>
+#texcanvas {
+    background-image: url("textures/NightEarth-512x256.jpg");
+    background-size: 100px 100px;
+}
+</style>
+<script src="../script/demo-core.js"></script>
+<script src="../script/glsim.js"></script>
+<script src="../script/teapot-model-IFS.js"></script>
+<script src="../script/basic-object-models-IFS.js"></script>
+<script src="../script/slider-canvas.js"></script>
+<script>
+
+var camera;
+
+var graphics;  // for drawing on the canvas that shows the texture
+
+var frameNumber = 0;  // frame number for the animation
+
+var sphere, cubeModel, cylinder, cone, torus, teapot, pyramid;  // model data for six objects.
+
+var sliderScale, sliderTranslateX, sliderTranslateY, sliderRotate;
+
+var scale = 1;
+var translateX = 0;
+var translateY = 0;
+var rotate = 0;
+
+var loadingImages = true;
+var textureImages = new Array();  // Will hold Image objects loaded from image URLs.
+var textureImageURLs = [
+    "data:image/png;base64,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",
+];
+
+function pyramid(sides=11) {
+    const angleStep = (Math.PI * 2) / sides;
+    const radius = 1;
+    const height = 1;
+    var positions = [];
+    var textureCoords = [];
+    var normals = [];
+    var indices = [];
+
+    positions.push(0, height, 0);
+    normals.push(0, 1, 0);
+    textureCoords.push(0.5, 1.0);
+
+    for (let i = 0; i < sides; i++) {
+        let angle = i * angleStep;
+        let x = radius * Math.cos(angle);
+        let z = radius * Math.sin(angle);
+        let y = 0;
+
+        positions.push(x, y, z);
+        textureCoords.push((Math.cos(angle) + 1) / 2, (Math.sin(angle) + 1) / 2);
+        normals.push(0, -1, 0);
+    }
+
+    positions.push(0, 0, 0);
+    textureCoords.push(0.5, 0.5);
+    normals.push(0, -1, 0);
+
+    const centerIndex = sides + 1;
+    for (let i = 1; i <= sides; i++) {
+        let next = i % sides + 1;
+        indices.push(centerIndex, i, next);
+    }
+
+    for (let i = 1; i <= sides; i++) {
+        let next = i % sides + 1;
+        indices.push(0, i, next);
+    }
+
+    return {
+        vertexPositions: new Float32Array(positions),
+        vertexNormals: new Float32Array(normals),
+        vertexTextureCoords: new Float32Array(textureCoords),
+        indices: new Uint8Array(indices)
+    };
+}
+
+function draw() {
+
+    scale = sliderScale.value(0);
+    rotate = sliderRotate.value(0);
+    translateX = sliderTranslateX.value(0);
+    translateY = sliderTranslateY.value(0);
+
+    drawTextureCanvas(); // Draws the canvas that displays the texture.
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if (loadingImages) {
+        return;
+    }
+    
+    var texnum = Number(document.getElementById("texture").value);
+    var objectNumber = Number(document.getElementById("object").value);
+    var image = textureImages[texnum];
+    glEnable(GL_TEXTURE_2D);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,image.width,image.height,0,GL_RGBA,GL_UNSIGNED_BYTE,image);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);  // MUST set this since we don't have mipmaps
+    
+    glMatrixMode(GL_TEXTURE);
+    glLoadIdentity();
+    glTranslatef(translateX,translateY, 0);
+    glRotatef(rotate,0,0,1);
+    glScalef(scale,scale,1);
+    glMatrixMode(GL_MODELVIEW);
+    
+    camera.apply();
+    
+    switch(objectNumber) {
+    case 0:
+        glRotatef(-90,1,0,0);
+        glScalef(1.5,1.5,1.5);
+        drawModel(sphere);
+        break;
+    case 1:
+        glScalef(1.2,1.2,1.2);
+         drawModel(cubeModel);
+         break;
+    case 2:
+        glRotatef(-90,1,0,0);
+        glScalef(1.3,1.3,1.3);
+        drawModel(cylinder);
+        break;
+    case 3:
+        glRotatef(-90,1,0,0);
+        glScalef(1.3,1.3,1.3);
+        drawModel(cone);
+        break;
+    case 4:
+        glScalef(1.6,1.6,1.6);
+        drawModel(torus);
+        break;
+    case 5:
+        glScalef(0.06, 0.06, 0.06);
+        drawModel(teapot);
+        break;
+    case 6:
+        glScalef(0.5, 0.5, 0.5);
+        glDisableClientState(GL_NORMAL_ARRAY);
+        glDisable(GL_LIGHTING);
+        glEnable(GL_TEXTURE_2D);
+        glColor3f(1,1,1);
+        drawModel(pyramid());
+        glEnable(GL_LIGHTING);
+        break;
+    }
+}
+
+function drawTextureCanvas() {
+    if (loadingImages) {
+        graphics.fillStyle = "white";
+        graphics.fillRect(0,0,300,300);
+        graphics.fillStyle = "black";
+        graphics.font = "14px serif";
+        graphics.fillText("Waiting for images to load...", 10, 40);
+        return;
+    }
+    graphics.clearRect(0,0,300,300);
+    graphics.save();
+    graphics.translate(100,200);
+    graphics.scale(1,-1);
+    graphics.translate(translateX*100,translateY*100);
+    graphics.rotate(rotate/180 * Math.PI);
+    graphics.scale(scale,scale);
+    graphics.lineWidth = 5/scale;
+    graphics.strokeStyle = "white";
+    graphics.strokeRect(-.5,-.5,100,100);
+    graphics.lineWidth = 1/scale;
+    graphics.strokeStyle = "black";
+    graphics.strokeRect(-.5,-.5,100,100);
+    graphics.restore();
+}
+
+/**
+ *  Draws a model using glDrawElements.  The model data must be in the format produced by
+ *  the functions in basic-object-models-IFS.js.
+ */
+function drawModel(model) {
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(3,GL_FLOAT,0,model.vertexPositions);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glNormalPointer(GL_FLOAT, 0, model.vertexNormals);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glTexCoordPointer(2,GL_FLOAT,0,model.vertexTextureCoords);
+    glDrawElements(GL_TRIANGLES, model.indices.length, GL_UNSIGNED_BYTE, model.indices);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_NORMAL_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);    
+}
+
+function initGL() {
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_NORMALIZE);
+    glEnable(GL_DEPTH_TEST);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, [ 1, 1, 1, 1 ]); // white, for texturing
+    glClearColor(0,0,0,1);
+}
+
+function loadImages() {
+    var loadedCt = 0;
+    for (var i = 0; i < textureImageURLs.length; i++) {
+        textureImages[i] = new Image();
+        textureImages[i].onload = imageLoaded;
+        textureImages[i].src = textureImageURLs[i];
+    }
+    function imageLoaded() {
+        loadedCt++;
+        if (loadedCt == textureImageURLs.length) {
+            loadingImages = false;
+            glEnable(GL_TEXTURE_2D);
+            var texnum = Number(document.getElementById("texture").value);
+            var image = textureImages[texnum];
+            try {
+                glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,image.width,image.height,0,GL_RGBA,GL_UNSIGNED_BYTE,image);
+            } catch(e) {
+                // Some browsers (Chrome at least) get a Security error if they try to use an image from the local disk.
+				document.getElementById("headline").innerHTML="Can't access texture.<br>Note: Some browsers can't use a file from a local disk."
+                console.log("Error loading texture: " + e);
+                return;
+            }
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);  // MUST set this since we don't have mipmaps
+            draw();
+            document.getElementById("object").disabled = false;
+            document.getElementById("texture").disabled = false;
+        }
+    }
+}
+
+function changeTexture() {
+    var texnum = Number(document.getElementById("texture").value);
+    document.getElementById("texcanvas").style.backgroundImage = "url('" + textureImageURLs[texnum] + "')";
+    var image = textureImages[texnum];
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,image.width,image.height,0,GL_RGBA,GL_UNSIGNED_BYTE,image);
+    draw();
+}
+
+function doReset() {
+    sliderRotate.setValue(0,0);
+    sliderScale.setValue(0,1);
+    sliderTranslateX.setValue(0,0);
+    sliderTranslateY.setValue(0,0);
+    camera.lookAt(10,7,20);
+    draw();
+}
+
+function init() {
+    try {
+        glsimUse("maincanvas");
+        var texcanvas = document.getElementById("texcanvas");
+        graphics = texcanvas.getContext('2d');
+    }
+    catch (e) {
+        document.getElementById("canvas-holder").innerHTML="<p><b>Sorry, an error occurred:<br>" +
+                e + "</b></p>";
+        return;
+    }
+    document.getElementById("reset").onclick = doReset;
+    document.getElementById("object").value = "1";
+    document.getElementById("object").onchange = draw;
+    document.getElementById("texture").value = "2";
+    document.getElementById("texture").onchange = changeTexture;
+    document.getElementById("object").disabled = true;
+    document.getElementById("texture").disabled = true;
+    sliderRotate = new SliderCanvas(document.getElementById("scRotate"));
+    sliderRotate.addSlider({label:"rotate", min:-180, max:180, value:0});
+    sliderScale = new SliderCanvas(document.getElementById("scScale"));
+    sliderScale.addSlider({label:"scale", min: 0.5, max:2, step:0.01, value:1, decimals:2});
+    sliderTranslateX = new SliderCanvas(document.getElementById("scTransX"));
+    sliderTranslateX.addSlider({label:"x-trans.", min: -0.5, max:0.5, step:0.01, value:0, decimals:2});
+    sliderTranslateY = new SliderCanvas(document.getElementById("scTransY"));
+    sliderTranslateY.addSlider({label:"y-trans.", min: -0.5, max:0.5, step:0.01, value:0, decimals:2});
+    sliderRotate.onChange = draw;
+    sliderScale.onChange = draw;
+    sliderTranslateX.onChange = draw;
+    sliderTranslateY.onChange = draw;
+    initGL();
+    camera = new Camera();
+    camera.setScale(1);
+    camera.lookAt(10,7,20);
+    camera.installTrackball(draw);
+    sphere = uvSphere();
+    cubeModel = cube();
+    cylinder = uvCylinder();
+    cone = uvCone();
+    torus = uvTorus();
+    teapot = teapotModel;  // (This one is just a variable, defined in teapot-model-IFS.js)
+    sliderRotate.draw();
+    sliderScale.draw();
+    sliderTranslateX.draw();
+    sliderTranslateY.draw();
+    drawTextureCanvas();
+    loadImages();
+}
+
+</script>
+</head>
+<body onload="init()">
+
+<div id="content">
+
+<h3 id="headline">Textures and Texture Transforms</h3>
+<table border="0" cellspacing="0" cellpadding="8">
+<tr>
+<td><div id="canvas-holder"><canvas id="texcanvas" width="300" height="300"></canvas></div></td>
+<td><canvas id="maincanvas" width="300" height="300"></canvas></td>
+</tr>
+<tr align="center">
+<td colspan="2">
+    <b>Texture:</b>
+    <select id="texture">
+        <option value="0">Brick</option>
+    </select>
+    <b style="margin-left:40px">Object</b>:
+    <select id="object">
+       <option value="0">Sphere</option>
+       <option value="1">Cube</option>
+       <option value="2">Cylinder</option>
+       <option value="3">Cone</option>
+       <option value="4">Torus</option>
+       <option value="5">Teapot</option>
+       <option value="6">Pyramid</opton>
+    </select>
+    <button id="reset" style="margin-left:40px">Reset</button>
+</td>
+</tr>
+<tr align=center>
+<td>
+    <canvas id="scScale" width="280" height="50"></canvas>
+</td>
+<td>
+    <canvas id="scTransX" width="280" height="50"></canvas>
+</td>
+</tr>
+<tr align=center>
+<td>
+    <canvas id="scRotate" width="280" height="50"></canvas>
+</td>
+<td>
+    <canvas id="scTransY" width="280" height="50"></canvas>
+</td>
+</tr>
+</table>
+
+
+</div>
+
+
+
+<div id="help-content" style="display:none">
+<h3>About this demo...</h3>
+<p>Textured objects are shown in the display at the upper right.
+Use the pop-up menus to select the texture and the object that
+you want to view.  You can use your mouse to rotate the objects.</p>
+<p>The display on the upper left shows the <i>st</i>-plane, where
+the texture lives.  In the display, <i>s</i> and <i>t</i> range
+from &minus;1 to 2.  A box is drawn around the original texture
+image, with <i>s</i> and <i>t</i> ranging from 0 to 1.  The
+point (0,0) is at the lower left corner of that box.  Note that
+(0,0) is not at the center of the display.</p>
+<p>Four sliders allow you apply texture transformations.  The
+transform can be seen as a coordinate transformation in the <i>st</i>-plane, or
+as a modeling transformation that applies to the box.  As a modeling transform,
+the box is first scaled, then rotated, then translated.  </p>
+<p>The same transform is also applied as a texture transformation on the textured
+object.  The result
+is easiest to see on the cube: <i>Each face of the cube shows a copy
+of the part of the <i>st</i>-plane that is inside the box.</i> </p>
+<p>Try adjusting just
+one slider while the others are at their default values.
+(Click "Reset" between experiments.)  Note that when the
+box is translated to the left, the image on the cube moves to the right.
+When the box grows, the image on the cube shrinks (because you are
+seeing a larger region in the <i>st</i>-plane mapped to the same
+area on the cube).  When the box rotates counterclockwise, the
+image on the cube rotates clockwise.</p>
+<p>Although the effect is easiest to understand on the cube, it's
+fun to watch a texture moving around on an object.  Try it!
+I especially like a rotating texture on the torus.</p>
+</div>
+
+
+
+<!-- support for help text -- do not change. -->
+<div id="help-icon">
+<img src="../image/question32.png" onclick="showDemoHelp()"
+    title="Click here for information about this demo." width="32" height="32">
+</div>
+<div id="hide-help-icon">
+<img src="../image/close32.png" onclick="showDemoHelp()"
+    title="Click here to return to the demo." width="65" height="32">
+</div>
+<div id="helpBG" style="display:none"></div>
+</body>
+</html>
